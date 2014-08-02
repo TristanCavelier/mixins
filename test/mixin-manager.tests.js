@@ -271,6 +271,27 @@
     deepEqual(out, [[["hello"]], [["hello"]]]);
   });
 
+  test("should not modify description", function () {
+    var out, description, descriptionClone;
+    try {
+      description = {
+        "a": {
+          "object": "one",
+          "args": ["1", "2"]
+        },
+        "b": {
+          "object": "two",
+          "args": ["3", "$a"]
+        }
+      };
+      descriptionClone = JSON.parse(JSON.stringify(description));
+      out = root.mixinManager.parse(description);
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(description, descriptionClone);
+  });
+
   test("built-in 'args' instanciation", function () {
     var out;
     try {

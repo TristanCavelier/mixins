@@ -2,7 +2,7 @@
 (function factory(root) {
   "use strict";
 
-  // Version: 0.1.0
+  // Version: 0.1.1
 
   // Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
   // This program is free software. It comes without any warranty, to
@@ -19,8 +19,63 @@
     return new Cons(executor, canceller);
   }
 
-  function spawn(generator) {
-    return ((root.promy && root.promy.spawn) || root.spawn)(generator);
+  /**
+   *     then(executor): promise< value >
+   *
+   * Execute the `executor` synchronously and converts its returned value into a
+   * thenable.
+   *
+   * @param  {Function} executor XXX
+   * @return {Promise} XXX
+   */
+  function then(executor) {
+    var value;
+    try {
+      value = executor();
+    } catch (e) {
+      return newPromise(function (_, reject) { reject(e); });
+    }
+    if (value && typeof value.then === "function") {
+      return value;
+    }
+    return newPromise(function (resolve) { resolve(value); });
+  }
+
+  /**
+   * sequence(thens): Promise
+   *
+   * Executes a sequence of *then* callbacks. It acts like
+   * `smth().then(callback).then(callback)...`. The first callback is called
+   * with no parameter.
+   *
+   * Elements of `thens` array can be a function or an array contaning at most
+   * three *then* callbacks: *onFulfilled*, *onRejected*, *onNotified*.
+   *
+   * When `cancel()` is executed, each then promises are cancelled at the same
+   * time.
+   *
+   * @param  {Array} thens An array of *then* callbacks
+   * @return {Promise} A new promise
+   */
+  function sequence(thens) {
+    var promises = [];
+    return new RSVP.Promise(function (resolve, reject, notify) {
+      var i;
+      promises[0] = then(thens[i]);
+      for (i = 0; i < thens.length; i += 1) {
+        if (Array.isArray(thens[i])) {
+          promises[i + 1] = promises[i].then(thens[i][0], thens[i][1], thens[i][2]);
+        } else {
+          promises[i + 1] = promises[i].then(thens[i]);
+        }
+      }
+      promises[i].then(resolve, reject, notify);
+    }, function () {
+      var i;
+      for (i = 0; i < promises.length; i += 1) {
+        promises[i].cancel();
+      }
+    });
   }
 
   function readBlobAsBinaryString(blob) {
@@ -48,19 +103,23 @@
 
   // rest (no stream) mixin method: get(url) -> response< Blob >
   Base64Layout.prototype.get = function (url) {
-    return spawn(function* () {
-      return atob(yield readBlobAsBinaryString(yield this._mixin.get(url)));
-    });
+    var it = this;
+    return sequence([function () {
+      return it._mixin.get(url);
+    }, readBlobAsBinaryString, atob]);
   };
 
   // rest (no stream) mixin method: put(url, data) -> response< empty >
   Base64Layout.prototype.put = function (url, data) {
-    return spawn(function* () {
-      return this._mixin.put(url, new Blob(
-        [btoa(yield readBlobAsBinaryString(data))],
+    var it = this;
+    return sequence([function () {
+      return readBlobAsBinaryString(data);
+    }, function (text) {
+      return it._mixin.put(url, new Blob(
+        [btoa(text)],
         {"type": (data.type || "application/octet-stream") + ";base64"}
       ));
-    });
+    }]);
   };
 
   // rest (no stream) mixin method: delete(url) -> response< empty >

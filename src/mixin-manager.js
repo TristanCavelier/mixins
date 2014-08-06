@@ -2,7 +2,7 @@
 (function factory(root) {
   "use strict";
 
-  // Version: 0.1.0
+  // Version: 0.1.1
 
   // Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
   // This program is free software. It comes without any warranty, to
@@ -92,7 +92,7 @@
             throw new TypeError("MixinManager.parse: description args should be an array");
           }
         }
-        nodes[id] = {"args": description[id].args || []};
+        nodes[id] = {"args": JSON.parse(JSON.stringify(description[id].args || []))};
       }
       if (!nonRoots[id]) { roots[id] = true; }
 

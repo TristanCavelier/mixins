@@ -14,16 +14,16 @@
   /*jslint indent: 2, nomen: true, vars: true */
 
   /**
-   *     hasOwnProperty(object, prop): Boolean
+   *     objectHasOwnProperty(object, prop): Boolean
    *
-   * The hasOwnProperty() method returns a boolean indicating whether the object
+   * The objectHasOwnProperty() method returns a boolean indicating whether the object
    * has the specified property.
    *
    * @param  {Object} object The object to use
    * @param  {String} prop The property name
    * @return {Boolean} The result
    */
-  var hasOwnProperty =
+  var objectHasOwnProperty =
     Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
   function MixinManager() {

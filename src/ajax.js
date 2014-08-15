@@ -221,6 +221,16 @@
     return this.request("DELETE", url);
   };
 
+  // mkcol'n'propfind mixin method: mkcol(url)
+  Ajax.prototype.mkcol = function (url) {
+    return this.request("MKCOL", url);
+  };
+
+  // mkcol'n'propfind mixin method: propfind(url)
+  Ajax.prototype.propfind = function (url) {
+    return this.request("PROPFIND", url);
+  };
+
   Ajax.request = request;
 
   root.Ajax = Ajax;

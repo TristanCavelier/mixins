@@ -76,7 +76,7 @@
       }, PrefixURLLayout);
     } catch (e) {
       if (root.console && typeof root.console.warn === "function") {
-        root.console.warn(new Error("PrefixURLLayout: Cannot add `PrefixURLLayout` to mixin manager"));
+        try { root.console.warn(e); } catch (ignore) {}
       }
     }
   }

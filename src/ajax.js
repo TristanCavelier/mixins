@@ -146,8 +146,11 @@
         }
         return resolve(result);
       };
-      xhr.onabort = xhr.onerror = function () {
+      xhr.onerror = function () {
         return reject(new Error("Ajax: " + method + ": Unknown Error"));
+      };
+      xhr.onabort = function () {
+        return reject(new Error("Ajax: " + method + ": Aborted"));
       };
       method = param.method || "GET";
       xhr.open(method, param.url);

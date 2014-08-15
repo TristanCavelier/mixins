@@ -37,9 +37,17 @@
 
   /**
    * @param mixin {Mixin}
+   * @param options {Object}
+   * @param options.noGet {Boolean}
+   * @param options.noPut {Boolean}
    */
-  function Base64Layout(mixin) {
+  function Base64Layout(mixin, options) {
     this._mixin = mixin;
+
+    if (options) {
+      if (options.noGet) { this._noGet = true; }
+      if (options.noPut) { this._noPut = true; }
+    }
 
     // make unmanaged methods unavailable
     var methodName;
@@ -58,6 +66,7 @@
 
   // rest (no stream) mixin method: get(url) -> response< Blob >
   Base64Layout.prototype.get = function (url) {
+    if (this._noGet) { return this._mixin.get(url); }
     var it = this;
     return sequence([function () {
       return it._mixin.get(url);
@@ -66,6 +75,7 @@
 
   // rest (no stream) mixin method: put(url, data) -> response< empty >
   Base64Layout.prototype.put = function (url, data) {
+    if (this._noPut) { return this._mixin.put(url, data); }
     var it = this;
     return sequence([function () {
       return readBlobAsBinaryString(data);
@@ -86,8 +96,8 @@
 
   if (root.mixinManager) {
     try {
-      root.mixinManager.register("base64", function (mixin) {
-        return new Base64Layout(mixin);
+      root.mixinManager.register("base64", function (mixin, options) {
+        return new Base64Layout(mixin, options);
       }, Base64Layout);
     } catch (e) {
       if (root.console && typeof root.console.warn === "function") {

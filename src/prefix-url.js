@@ -67,6 +67,26 @@
     return this._mixin["delete"](this._prefix + url + this._suffix);
   };
 
+  // restStream mixin method: getStream(url) -> ReadableResponse< Blob >
+  PrefixURLLayout.prototype.getStream = function (url) {
+    return this._mixin.getStream(this._prefix + url + this._suffix);
+  };
+
+  // restStream mixin method: putStream(url) -> XXX
+  PrefixURLLayout.prototype.putStream = function (url) {
+    return this._mixin.putStream(this._prefix + url + this._suffix);
+  };
+
+  // mkcol'n'propfind mixin method: mkcol(url)
+  PrefixURLLayout.prototype.mkcol = function (url) {
+    return this._mixin.mkcol(this._prefix + url + this._suffix);
+  };
+
+  // mkcol'n'propfind mixin method: propfind(url)
+  PrefixURLLayout.prototype.propfind = function (url) {
+    return this._mixin.propfind(this._prefix + url + this._suffix);
+  };
+
   root.PrefixURLLayout = PrefixURLLayout;
 
   if (root.mixinManager) {

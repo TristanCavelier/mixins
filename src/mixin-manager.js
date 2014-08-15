@@ -32,8 +32,8 @@
   }
 
   MixinManager.prototype.register = function (id, creator, Constructor) {
-    if (hasOwnProperty(this._mixins, id)) {
-      throw new TypeError("MixinManager.register: ID already in use");
+    if (objectHasOwnProperty(this._mixins, id)) {
+      throw new TypeError("MixinManager.register: ID `" + id + "` is already defined");
     }
     // id.replace(/[^0-9A-Za-z_.\- ]/, function () {
     //   throw new TypeError("MixinManager.register: incorrect ID");

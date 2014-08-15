@@ -12,7 +12,6 @@
   // the COPYING file for more details.
 
   /*jslint indent: 2, nomen: true */
-  /*global XMLHttpRequest, Blob */
 
   function newPromise(executor, canceller) {
     var Cons = root.CancellablePromise || root.Promise;
@@ -108,7 +107,7 @@
    */
   function request(param) {
     /*jslint forin: true */
-    var xhr = new XMLHttpRequest();
+    var xhr = new root.XMLHttpRequest();
     return newPromise(function (resolve, reject) {
       var k, i, tmp, method;
       tmp = param.headers;
@@ -230,7 +229,9 @@
         return new Ajax(param);
       }, Ajax);
     } catch (e) {
-      console.warn("Ajax: Cannot add `ajax` to mixin manager");
+      if (root.console && typeof root.console.warn === "function") {
+        try { root.console.warn(e); } catch (ignore) {}
+      }
     }
   }
 

@@ -40,6 +40,15 @@
    */
   function Base64Layout(mixin) {
     this._mixin = mixin;
+
+    // make unmanaged methods unavailable
+    var methodName;
+    for (methodName in Base64Layout.prototype) {
+      /*jslint forin: true */
+      if (typeof this._mixin[methodName] !== "function") {
+        this[methodName] = null;
+      }
+    }
   }
 
   // rest (no stream) mixin method: head(url) -> response< empty >

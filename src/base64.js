@@ -12,7 +12,6 @@
   // the COPYING file for more details.
 
   /*jslint indent: 2, nomen: true */
-  /*global btoa, atob, Blob, FileReader */
 
   function newPromise(executor, canceller) {
     var Cons = (root.promy && root.promy.Promise) || root.Promise;
@@ -80,7 +79,7 @@
 
   function readBlobAsBinaryString(blob) {
     return newPromise(function (resolve, reject) {
-      var fr = new FileReader();
+      var fr = new root.FileReader();
       fr.addEventListener("load", function () { resolve(fr.result); });
       fr.addEventListener("error", function () {
         reject(new Error("readBlobAsBinaryString: Cannot read blob"));
@@ -106,7 +105,7 @@
     var it = this;
     return sequence([function () {
       return it._mixin.get(url);
-    }, readBlobAsBinaryString, atob]);
+    }, readBlobAsBinaryString, root.atob]);
   };
 
   // rest (no stream) mixin method: put(url, data) -> response< empty >
@@ -115,8 +114,8 @@
     return sequence([function () {
       return readBlobAsBinaryString(data);
     }, function (text) {
-      return it._mixin.put(url, new Blob(
-        [btoa(text)],
+      return it._mixin.put(url, new root.Blob(
+        [root.btoa(text)],
         {"type": (data.type || "application/octet-stream") + ";base64"}
       ));
     }]);
@@ -135,7 +134,9 @@
         return new Base64Layout(mixin);
       }, Base64Layout);
     } catch (e) {
-      console.warn("Base64Layout: Cannot add `base64` to mixin manager");
+      if (root.console && typeof root.console.warn === "function") {
+        try { root.console.warn(e); } catch (ignore) {}
+      }
     }
   }
 

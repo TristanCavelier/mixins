@@ -12,7 +12,6 @@
   // the COPYING file for more details.
 
   /*jslint indent: 2 */
-  /*global XMLHttpRequest, btoa, DOMParser */
 
   function capitalize(string) {
     return string.slice(0, 1).toUpperCase() + string.slice(1).toLowerCase();
@@ -97,7 +96,7 @@
       this._ajax = new root.Ajax({
         "headers": {
           "Authorization": "Basic " +
-            btoa(param.username + ":" + param.password)
+            root.btoa(param.username + ":" + param.password)
         },
         ":propfind": propfind_param
       });
@@ -150,7 +149,7 @@
     }, function (response) {
       /*jslint ass: true */
       var i, l, tmp, rows = [], row, responses;
-      responses = new DOMParser().
+      responses = new root.DOMParser().
         parseFromString(response.data, "text/xml").
         querySelectorAll("D\\:response, response");
 
@@ -192,7 +191,9 @@
         return new WebDAV(param);
       }, WebDAV);
     } catch (e) {
-      console.warn("WebDAV: Cannot add `webdav` to mixin manager");
+      if (root.console && typeof root.console.warn === "function") {
+        try { root.console.warn(e); } catch (ignore) {}
+      }
     }
   }
 

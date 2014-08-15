@@ -14,77 +14,24 @@
   /*jslint indent: 2, nomen: true */
 
   function newPromise(executor, canceller) {
-    var Cons = (root.promy && root.promy.Promise) || root.Promise;
+    var Cons = root.CancellablePromise || root.Promise;
     return new Cons(executor, canceller);
   }
 
-  /**
-   *     then(executor): promise< value >
-   *
-   * Execute the `executor` synchronously and converts its returned value into a
-   * thenable.
-   *
-   * @param  {Function} executor XXX
-   * @return {Promise} XXX
-   */
-  function then(executor) {
-    var value;
-    try {
-      value = executor();
-    } catch (e) {
-      return newPromise(function (_, reject) { reject(e); });
-    }
-    if (value && typeof value.then === "function") {
-      return value;
-    }
-    return newPromise(function (resolve) { resolve(value); });
-  }
-
-  /**
-   * sequence(thens): Promise
-   *
-   * Executes a sequence of *then* callbacks. It acts like
-   * `smth().then(callback).then(callback)...`. The first callback is called
-   * with no parameter.
-   *
-   * Elements of `thens` array can be a function or an array contaning at most
-   * three *then* callbacks: *onFulfilled*, *onRejected*, *onNotified*.
-   *
-   * When `cancel()` is executed, each then promises are cancelled at the same
-   * time.
-   *
-   * @param  {Array} thens An array of *then* callbacks
-   * @return {Promise} A new promise
-   */
-  function sequence(thens) {
-    var promises = [];
-    return new RSVP.Promise(function (resolve, reject, notify) {
-      var i;
-      promises[0] = then(thens[i]);
-      for (i = 0; i < thens.length; i += 1) {
-        if (Array.isArray(thens[i])) {
-          promises[i + 1] = promises[i].then(thens[i][0], thens[i][1], thens[i][2]);
-        } else {
-          promises[i + 1] = promises[i].then(thens[i]);
-        }
-      }
-      promises[i].then(resolve, reject, notify);
-    }, function () {
-      var i;
-      for (i = 0; i < promises.length; i += 1) {
-        promises[i].cancel();
-      }
-    });
+  function sequence(thenArray) {
+    return ((root.CancellablePromise && root.CancellablePromise.sequence) || root.sequence)(thenArray);
   }
 
   function readBlobAsBinaryString(blob) {
+    var fr = new root.FileReader();
     return newPromise(function (resolve, reject) {
-      var fr = new root.FileReader();
       fr.addEventListener("load", function () { resolve(fr.result); });
       fr.addEventListener("error", function () {
         reject(new Error("readBlobAsBinaryString: Cannot read blob"));
       });
       fr.readAsBinaryString(blob);
+    }, function () {
+      fr.abort();
     });
   }
 

@@ -139,7 +139,7 @@
         }
         var result = {
           "status": xhr.status,
-          "headers": headersAsKeyValues(xhr.getAllResponseHeaders()),
+          "headers": headersAsKeyValues(xhr.getAllResponseHeaders())
         };
         if (xhr.response !== undefined) {
           result.data = xhr.response;

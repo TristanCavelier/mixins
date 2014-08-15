@@ -27,13 +27,14 @@ Mixin methods
 **DRAFT**
 
     yield read([size]) -> Blob
+    close()
 
 ### writableStream
 
 **DRAFT**
 
     yield write(data)
-    yield close()
+    close()
 
 ### rest
 
@@ -160,7 +161,7 @@ XXX
 License of this document + version
 ----------------------------------
 
-Version: 0.2.0
+Version: 0.3.0
 
 > Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
 >

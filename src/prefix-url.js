@@ -41,6 +41,13 @@
     this._prefix = prefix || "";
     this._mixin = mixin;
     this._suffix = suffix || "";
+
+    // make unmanaged methods unavailable
+    for (var methodName in PrefixURLLayout.prototype) {
+      if (typeof this._mixin[methodName] !== "function") {
+        this[methodName] = null;
+      }
+    }
   }
 
   // rest mixin method: head(url) -> response< empty >

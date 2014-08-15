@@ -13,68 +13,12 @@
 
   /*jslint indent: 2 */
 
+  function sequence(thenArray) {
+    return ((root.CancellablePromise && root.CancellablePromise.sequence) || root.sequence)(thenArray);
+  }
+
   function capitalize(string) {
     return string.slice(0, 1).toUpperCase() + string.slice(1).toLowerCase();
-  }
-
-
-  /**
-   *     then(executor): promise< value >
-   *
-   * Execute the `executor` synchronously and converts its returned value into a
-   * thenable.
-   *
-   * @param  {Function} executor XXX
-   * @return {Promise} XXX
-   */
-  function then(executor) {
-    var value;
-    try {
-      value = executor();
-    } catch (e) {
-      return newPromise(function (_, reject) { reject(e); });
-    }
-    if (value && typeof value.then === "function") {
-      return value;
-    }
-    return newPromise(function (resolve) { resolve(value); });
-  }
-
-  /**
-   * sequence(thens): Promise
-   *
-   * Executes a sequence of *then* callbacks. It acts like
-   * `smth().then(callback).then(callback)...`. The first callback is called
-   * with no parameter.
-   *
-   * Elements of `thens` array can be a function or an array contaning at most
-   * three *then* callbacks: *onFulfilled*, *onRejected*, *onNotified*.
-   *
-   * When `cancel()` is executed, each then promises are cancelled at the same
-   * time.
-   *
-   * @param  {Array} thens An array of *then* callbacks
-   * @return {Promise} A new promise
-   */
-  function sequence(thens) {
-    var promises = [];
-    return new RSVP.Promise(function (resolve, reject, notify) {
-      var i;
-      promises[0] = then(thens[i]);
-      for (i = 0; i < thens.length; i += 1) {
-        if (Array.isArray(thens[i])) {
-          promises[i + 1] = promises[i].then(thens[i][0], thens[i][1], thens[i][2]);
-        } else {
-          promises[i + 1] = promises[i].then(thens[i]);
-        }
-      }
-      promises[i].then(resolve, reject, notify);
-    }, function () {
-      var i;
-      for (i = 0; i < promises.length; i += 1) {
-        promises[i].cancel();
-      }
-    });
   }
 
   /**

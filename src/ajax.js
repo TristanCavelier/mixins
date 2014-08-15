@@ -15,7 +15,7 @@
   /*global XMLHttpRequest, Blob */
 
   function newPromise(executor, canceller) {
-    var Cons = (root.promy && root.promy.Promise) || root.Promise;
+    var Cons = root.CancellablePromise || root.Promise;
     return new Cons(executor, canceller);
   }
 
@@ -109,7 +109,7 @@
   function request(param) {
     /*jslint forin: true */
     var xhr = new XMLHttpRequest();
-    return newPromise(function (resolve, reject, notify) {
+    return newPromise(function (resolve, reject) {
       var k, i, tmp, method;
       tmp = param.headers;
       if (tmp) {
@@ -150,17 +150,6 @@
       xhr.onabort = xhr.onerror = function () {
         return reject(new Error("Ajax: " + method + ": Unknown Error"));
       };
-      if (typeof notify === "function" && !param.disableNotifications) {
-        xhr.onprogress = function (event) {
-          return notify({
-            "type": "Ajax",
-            "url": param.url,
-            "method": method,
-            "loaded": event.loaded,
-            "total": event.total
-          });
-        };
-      }
       method = param.method || "GET";
       xhr.open(method, param.url);
       xhr.responseType = param.responseType || "blob";

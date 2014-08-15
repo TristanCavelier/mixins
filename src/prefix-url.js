@@ -3,7 +3,7 @@
   "use strict";
 
   /*
-   Version: 0.1.0
+   Version: 0.2.0
 
    Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
 
@@ -35,7 +35,9 @@
   /*jslint indent: 2, nomen: true */
 
   /**
+   * @param prefix {String}
    * @param mixin {Mixin}
+   * @param [suffix] {String}
    */
   function PrefixURLLayout(prefix, mixin, suffix) {
     this._prefix = prefix || "";

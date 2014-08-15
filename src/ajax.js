@@ -19,18 +19,6 @@
     return new Cons(executor, canceller);
   }
 
-  function newDeferred() {
-    var d = {};
-    d.promise = newPromise(function (resolve, reject, notify) {
-      d.resolve = resolve;
-      d.reject = reject;
-      if (typeof notify === "function") {
-        d.notify = notify;
-      }
-    });
-    return d;
-  }
-
   // function checkHeadersJSONSchema(headers_json) {
   //   /*jslint forin: true */
   //   if (typeof headers_json !== "object" || headers_json === null) {
@@ -185,91 +173,6 @@
     });
   }
 
-  function GetTextStream(url) {
-    var it = this;
-    this._xhr = new XMLHttpRequest();
-    this._textChunk = "";
-    this._loadedTextLength = 0;
-    this._realSize = 0;
-    this._realChunkSize = 0;
-    this._dataEnd = false;
-    this._error = null;
-    this._xhr.onprogress = function (event) {
-      it._textChunk += event.target.response.slice(it._loadedTextLength);
-      it._loadedTextLength = event.target.response.length;
-      it._realChunkSize += event.loaded - it._realSize;
-      it._realSize = event.loaded;
-
-      if (it._dataDeferred) {
-        it._dataDeferred.resolve({
-          "data": it._textChunk,
-          "size": it._realChunkSize,
-          "eof": false
-        });
-        it._textChunk = "";
-        it._realChunkSize = 0;
-        delete it._dataDeferred;
-      }
-    };
-    this._xhr.onload = function (event) {
-      it._textChunk += event.target.response.slice(it._loadedTextLength);
-      // it._loadedTextLength = event.target.response.length;
-      it._realChunkSize += event.loaded - it._realSize;
-      it._realSize = event.loaded;
-      it._dataEnd = true;
-
-      if (it._dataDeferred) {
-        it._dataDeferred.resolve({
-          "data": it._textChunk,
-          "size": it._realChunkSize,
-          "eof": true
-        });
-        it._textChunk = "";
-        it._realChunkSize = 0;
-        delete it._dataDeferred;
-      }
-    };
-    this._xhr.onabort = this._xhr.onerror = function () {
-      it._error = "ERRORR"; // XXX
-
-      if (it._dataDeferred) {
-        it._dataDeferred.reject(it._error);
-        delete it._dataDeferred;
-      }
-    };
-    this._xhr.open("GET", url);
-    this._xhr.send();
-  }
-  GetTextStream.prototype.read = function () {
-    if (this._dataDeferred) {
-      throw new Error("XXX one read at the same time allowed");
-      //return this._dataDeferred.promise;
-    }
-    var d;
-    if (this._error) {
-      d = newDeferred();
-      d.reject(this._error);
-      return d.promise;
-    }
-    if (this._textChunk === "") {
-      if (this._dataEnd) {
-        throw new Error("XXX stream closed");
-        // return null;
-      }
-      this._dataDeferred = newDeferred();
-      return this._dataDeferred.promise;
-    }
-    d = newDeferred();
-    d.resolve({
-      "data": this._textChunk,
-      "size": this._realChunkSize,
-      "eof": this._dataEnd ? true : false
-    });
-    this._textChunk = "";
-    this._realChunkSize = 0;
-    return d.promise;
-  };
-
   /**
    * @param [param] {Object}
    * @param [param.headers] {Object<Array<String>>}
@@ -316,74 +219,6 @@
   // rest (no stream) mixin method: delete(url) -> response< empty >
   Ajax.prototype["delete"] = function (url) {
     return this.request("DELETE", url);
-  };
-
-  Ajax.prototype.requestStream = function (method, url) {
-    var data, param = {};
-    /*jslint forin: true */
-    var xhr = new XMLHttpRequest();
-    return newPromise(function (resolve, reject, notify) {
-      var k, i, tmp, method;
-      tmp = param.headers;
-      if (tmp) {
-        for (k in tmp) {
-          for (i = 0; i < tmp[k].length; i += 1) {
-            if (typeof tmp[k][i] === "string") {
-              xhr.setRequestHeader(k, tmp[k][i]);
-            }
-          }
-        }
-      }
-      tmp = param.xhrFields;
-      if (tmp) {
-        for (k in tmp) {
-          xhr[k] = tmp[k];
-        }
-      }
-      xhr.onload = function () {
-        if ((param.handleHTTPStatusError === undefined ||
-             param.handleHTTPStatusError) && xhr.status >= 400) {
-          return reject(_copyObjectKeys(
-            new Error("Ajax: " + method + ": " + xhr.statusText),
-            {
-              "status": xhr.status,
-              "headers": headersAsKeyValues(xhr.getAllResponseHeaders())
-            }
-          ));
-        }
-        var result = {
-          "status": xhr.status,
-          "headers": headersAsKeyValues(xhr.getAllResponseHeaders()),
-        };
-        if (xhr.response !== undefined) {
-          result.data = xhr.response;
-        }
-        return resolve(result);
-      };
-      xhr.onabort = xhr.onerror = function () {
-        return reject(new Error("Ajax: " + method + ": Unknown Error"));
-      };
-      if (typeof notify === "function" && !param.disableNotifications) {
-        xhr.onprogress = function (event) {
-          return notify({
-            "type": "Ajax",
-            "url": param.url,
-            "method": method,
-            "loaded": event.loaded,
-            "total": event.total
-          });
-        };
-      }
-      method = param.method || "GET";
-      xhr.open(method, param.url);
-      xhr.responseType = param.responseType || "blob";
-      if (typeof param.beforeSend === "function") {
-        param.beforeSend.call(null, xhr);
-      }
-      return xhr.send(param.data);
-    }, function () {
-      xhr.abort();
-    });
   };
 
   Ajax.request = request;

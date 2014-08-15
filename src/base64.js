@@ -2,16 +2,49 @@
 (function factory(root) {
   "use strict";
 
-  // Version: 0.1.1
+  /*
+   Version: 0.2.0
 
-  // Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
-  // This program is free software. It comes without any warranty, to
-  // the extent permitted by applicable law. You can redistribute it
-  // and/or modify it under the terms of the Do What The Fuck You Want
-  // To Public License, Version 2, as published by Sam Hocevar. See
-  // the COPYING file for more details.
+   Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
+
+   This program is free software. It comes without any warranty, to
+   the extent permitted by applicable law. You can redistribute it
+   and/or modify it under the terms of the Do What The Fuck You Want
+   To Public License, Version 2, as published by Sam Hocevar. See
+   below for more details.
+
+   ___________________________________________________________________
+  |                                                                   |
+  |           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE             |
+  |                   Version 2, December 2004                        |
+  |                                                                   |
+  |Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>                   |
+  |                                                                   |
+  |Everyone is permitted to copy and distribute verbatim or modified  |
+  |copies of this license document, and changing it is allowed as long|
+  |as the name is changed.                                            |
+  |                                                                   |
+  |           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE             |
+  |  TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION  |
+  |                                                                   |
+  | 0. You just DO WHAT THE FUCK YOU WANT TO.                         |
+  |___________________________________________________________________|
+
+  */
 
   /*jslint indent: 2, nomen: true */
+
+  // Dependencies:
+  // - Promise (native)
+  // - Blob (native)
+  // - FileReader (native)
+  // - btoa (native)
+  // - atob (native)
+  // - sequence (https://github.com/TristanCavelier/notesntools/blob/master/javascript/promise-tools/sequence.js)
+  // Optional dependencies:
+  // - mixinManager (https://github.com/TristanCavelier/mixins/blob/master/src/mixin-manager.js)
+  // - CancellablePromise (https://github.com/TristanCavelier/notesntools/blob/master/javascript/promise-tools/CancellablePromise.js)
+  // - CancellablePromise.sequence
 
   function newPromise(executor, canceller) {
     var Cons = root.CancellablePromise || root.Promise;
@@ -59,12 +92,12 @@
     }
   }
 
-  // rest (no stream) mixin method: head(url) -> response< empty >
+  // rest mixin method: head(url) -> response< empty >
   Base64Layout.prototype.head = function (url) {
     return this._mixin.head(url);
   };
 
-  // rest (no stream) mixin method: get(url) -> response< Blob >
+  // rest mixin method: get(url) -> response< Blob >
   Base64Layout.prototype.get = function (url) {
     if (this._noGet) { return this._mixin.get(url); }
     var it = this;
@@ -73,7 +106,7 @@
     }, readBlobAsBinaryString, root.atob]);
   };
 
-  // rest (no stream) mixin method: put(url, data) -> response< empty >
+  // rest mixin method: put(url, data) -> response< empty >
   Base64Layout.prototype.put = function (url, data) {
     if (this._noPut) { return this._mixin.put(url, data); }
     var it = this;
@@ -87,7 +120,7 @@
     }]);
   };
 
-  // rest (no stream) mixin method: delete(url) -> response< empty >
+  // rest mixin method: delete(url) -> response< empty >
   Base64Layout.prototype["delete"] = function (url) {
     return this._mixin["delete"](url);
   };

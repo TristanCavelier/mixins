@@ -46,15 +46,13 @@
     ok(true);
   });
 
-  root.mixinManager.register("hasOwnProperty", function () {
-    return [];
-  });
-  root.mixinManager.register("toString", function () {
-    return [];
-  });
-
-  test("confusing id 'hasOwnProperty' & 'toString' registered", function () {
-    ok(true);
+  test("register confusing id 'hasOwnProperty' & 'toString'", 0, function () {
+    root.mixinManager.register("hasOwnProperty", function () {
+      return [];
+    });
+    root.mixinManager.register("toString", function () {
+      return [];
+    });
   });
 
   test("cannot register twice", function () {

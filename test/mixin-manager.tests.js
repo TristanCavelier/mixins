@@ -86,7 +86,7 @@
   //   deepEqual([error.name, error.message], ["TypeError", "MixinManager.register: incorrect ID"]);
   // });
 
-  test("one node (empty description)", function () {
+  test("no node (empty description)", function () {
     var error = {"name": "No Error"};
     try {
       root.mixinManager.parse({});
@@ -209,7 +209,7 @@
     deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Infinite graph detected"]);
   });
 
-  test("two nodes (no children)", function () {
+  test("two nodes (two roots)", function () {
     var error = {"name": "No Error"};
     try {
       root.mixinManager.parse({

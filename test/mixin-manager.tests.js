@@ -44,7 +44,7 @@
     } catch (e) {
       error = e;
     }
-    deepEqual([error.name, error.message], ["TypeError", "MixinManager.register: ID already in use"]);
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.register: ID `cannot register twice` is already defined"]);
   });
 
   // test("register invalid id", function () {

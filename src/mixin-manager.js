@@ -166,12 +166,12 @@
     return new Date(date);
   });
 
+  /*jslint regexp: true */
   var reRegexp = /^\/((?:[^\\\/]|\\.)*)\/([a-z]*)$/i;
+  /*jslint regexp: false */
   mixinManager.register("regexp", function (regexp) {
     var parsed = reRegexp.exec(regexp);
-    if (parsed) {
-      return new RegExp(parsed[1], parsed[2]);
-    }
+    if (parsed) { return new RegExp(parsed[1], parsed[2]); }
     return new RegExp(regexp);
   });
 

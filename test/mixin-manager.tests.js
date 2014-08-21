@@ -317,6 +317,7 @@
       return ok(false, e);
     }
     deepEqual(description, descriptionClone);
+    deepEqual(out, ["3", ["1"]]);
   });
 
   test("built-in 'args' instanciation", function () {

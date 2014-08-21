@@ -96,6 +96,26 @@
     deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: description graph should contain one root"]);
   });
 
+  test("no node (empty description) (json version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse("{}");
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: description graph should contain one root"]);
+  });
+
+  test("no node (empty description) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse("");
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["SyntaxError", "MixinManager.stringToJSON: identifier expected"]);
+  });
+
   test("one node (bad description root)", function () {
     var error = {"name": "No Error"};
     try {
@@ -120,6 +140,16 @@
     deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Object `undefined` is not defined in mixin registry"]);
   });
 
+  test("one node (bad description root) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('"  ');
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["SyntaxError", "MixinManager.stringToJSON: identifier expected"]);
+  });
+
   test("one node (undefined mixin)", function () {
     var error = {"name": "No Error"};
     try {
@@ -128,6 +158,16 @@
           "object": "blue"
         }
       });
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Object `blue` is not defined in mixin registry"]);
+  });
+
+  test("one node (undefined mixin) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse("blue");
     } catch (e) {
       error = e;
     }
@@ -149,6 +189,51 @@
     deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: description args should be an array"]);
   });
 
+  test("one node (bad mixin args format) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('a:one[invalid]');
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["SyntaxError", "MixinManager.stringToJSON: expected `,` or end after arguments or id given to `a`"]);
+  });
+
+  test("one node (no children, no args)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse({
+        "a": {
+          "object": "one",
+          "args": ["1", "2"]
+        }
+      });
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, ["1"]);
+  });
+
+  test("one node (no children, no args) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('a:one');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, [undefined]);
+  });
+
+  test("one node (no children, no args, no name) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('one');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, [undefined]);
+  });
+
   test("one node (no children)", function () {
     var out;
     try {
@@ -158,6 +243,16 @@
           "args": ["1", "2"]
         }
       });
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, ["1"]);
+  });
+
+  test("one node (no children) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('a:one["1", "2"]');
     } catch (e) {
       return ok(false, e);
     }
@@ -179,6 +274,36 @@
     deepEqual(out, [{"$b": "$b"}]);
   });
 
+  test("one node (confusing arg) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('a:one[{"$b":"$b"}]');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, [{"$b": "$b"}]);
+  });
+
+  test("one node (confusing arg) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('a:one[{"[":"["}]');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, [{"[": "["}]);
+  });
+
+  test("one node (confusing name) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('"b a":one');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, [undefined]);
+  });
+
   test("one node (missing children)", function () {
     var error = {"name": "No Error"};
     try {
@@ -194,6 +319,16 @@
     deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Unknown reference to ID `b`"]);
   });
 
+  test("one node (missing children) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('a:one["1","$b"]');
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Unknown reference to ID `b`"]);
+  });
+
   test("one node (auto referencing)", function () {
     var error = {"name": "No Error"};
     try {
@@ -203,6 +338,16 @@
           "args": ["1", "$a"]
         }
       });
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Infinite graph detected"]);
+  });
+
+  test("one node (auto referencing) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('a:one["1","$a"]');
     } catch (e) {
       error = e;
     }
@@ -228,6 +373,45 @@
     deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: description graph should not contain several roots"]);
   });
 
+  test("two nodes (two roots) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('a:one["1"],b:two["2","3"]');
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: description graph should not contain several roots"]);
+  });
+
+  test("two nodes (wrong reference)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse({
+        "a": {
+          "object": "one",
+          "args": ["1"]
+        },
+        "b": {
+          "object": "two",
+          "args": ["2", "$c"]
+        }
+      });
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Unknown reference to ID `c`"]);
+  });
+
+  test("two nodes (wrong child) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('a:one["1"],b:two["2","$c"]');
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.parse: Unknown reference to ID `c`"]);
+  });
+
   test("one root, one leaf", function () {
     var out;
     try {
@@ -245,6 +429,36 @@
       return ok(false, e);
     }
     deepEqual(out, ["1", ["1"]]);
+  });
+
+  test("one root, one leaf (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('a:one["1","2"],b:two["1","$a"]');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, ["1", ["1"]]);
+  });
+
+  test("one root, one leaf (no name) (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('one["1","2"],two["1","$one"]');
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, ["1", ["1"]]);
+  });
+
+  test("one root, one leaf (same name) (string version)", function () {
+    var error = {"name": "No Error"};
+    try {
+      root.mixinManager.parse('a:one["1"],a:one["2","a"]');
+    } catch (e) {
+      error = e;
+    }
+    deepEqual([error.name, error.message], ["TypeError", "MixinManager.stringToJSON: `a` is set more than once"]);
   });
 
   test("one root, two leaves", function () {
@@ -291,6 +505,48 @@
           "args": ["hello"]
         }
       });
+    } catch (e) {
+      return ok(false, e);
+    }
+    ok(out[0][0] === out[1][0]);
+    deepEqual(out, [[["hello"]], [["hello"]]]);
+  });
+
+  test("one root, two ways, one shared leaf (json version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('{' +
+                                    '  "root": {' +
+                                    '    "object": "two",' +
+                                    '    "args": ["$left", "$right"]' +
+                                    '  },' +
+                                    '  "left": {' +
+                                    '    "object": "one",' +
+                                    '    "args": ["$leaf"]' +
+                                    '  },' +
+                                    '  "right": {' +
+                                    '    "object": "one",' +
+                                    '    "args": ["$leaf"]' +
+                                    '  },' +
+                                    '  "leaf": {' +
+                                    '    "object": "one",' +
+                                    '    "args": ["hello"]' +
+                                    '  }' +
+                                    '}');
+    } catch (e) {
+      return ok(false, e);
+    }
+    ok(out[0][0] === out[1][0]);
+    deepEqual(out, [[["hello"]], [["hello"]]]);
+  });
+
+  test("one root, two ways, one shared leaf (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('root:two["$left","$right"],' +
+                                    'left:one["$leaf"],' +
+                                    'right:one["$leaf"],' +
+                                    'leaf:one["hello"]');
     } catch (e) {
       return ok(false, e);
     }
@@ -485,6 +741,16 @@
           }]
         }
       });
+    } catch (e) {
+      return ok(false, e);
+    }
+    deepEqual(out, ["a"]);
+  });
+
+  test("built-in 'mixin' instanciation (string version)", function () {
+    var out;
+    try {
+      out = root.mixinManager.parse('mixin["one[\\"a\\"]"]');
     } catch (e) {
       return ok(false, e);
     }

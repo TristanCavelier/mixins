@@ -318,12 +318,13 @@
 
   // detects if description is a string or an object, and tries to make a mixin from it
   MixinManager.prototype.parse = function (description) {
+    var tmp;
     if (typeof description === "string") {
-      try {
-        description = JSON.parse(description);
-      } catch (e) {
+      tmp = eat.JSONValue(description);
+      if (tmp === null || tmp[2] !== "") {
         return parseObject.call(this, stringToJSON.call(this, description));
       }
+      description = tmp.object;
     }
     if (typeof description !== "object" || description === null) {
       throw new TypeError("MixinManager.parse: description should be a valid non empty string or an object");

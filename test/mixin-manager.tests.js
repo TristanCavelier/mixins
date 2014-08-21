@@ -30,7 +30,8 @@
   */
 
   /*jslint indent: 2 */
-  /*global test, ok, deepEqual, module */
+
+  var test = root.test, ok = root.ok, deepEqual = root.deepEqual, module = root.module;
 
   module("Mixin Manager");
 

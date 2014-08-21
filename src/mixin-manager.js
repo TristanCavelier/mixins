@@ -3,7 +3,7 @@
   "use strict";
 
   /*
-   Version: 0.1.2
+   Version: 0.2.0
 
    Copyright (c) 2014 Tristan Cavelier <t.cavelier@free.fr>
 
@@ -47,6 +47,13 @@
   var objectHasOwnProperty =
     Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
+  function update(a, b) {
+    /*jslint forin: true */
+    var k;
+    for (k in b) { a[k] = b[k]; }
+    return a;
+  }
+
   function MixinManager() {
     this._mixins = {};
     this._constructors = {};
@@ -71,6 +78,164 @@
     }
   };
 
+  /*jslint regexp: true, ass: true */
+  var eat = {};
+
+  var reStrJSONExp = "(?:[eE][\\-\\+]?[0-9]+)";
+  var reStrJSONFrac = "(?:\\.[0-9]+)";
+  var reStrJSONInt = "(?:-?(?:[1-9][0-9]*|[0-9]))";
+  var reStrJSONNumber = "(?:" + reStrJSONInt + "(?:" + reStrJSONFrac + reStrJSONExp + "?|" + reStrJSONExp + "|))";
+  var reStrJSONChar = "(?:[^\\x00-\\x1F\\x7F\"\\\\]|\\\\[\"\\\\/bfnrt]|\\\\u[0-9]{4})";
+  var reStrJSONString = "(?:\"" + reStrJSONChar + "*\")";
+
+  var reEatWhiteSpacesIfThere = /^(\s*)(.*)/;
+  eat.JSONObject = function (text) {
+    var tmp, tmp2, object = {};
+    if ((tmp = (/^(\{)(.*)/).exec(text)) === null) { return null; }
+    tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    if ((tmp2 = (/^(\})(.*)/).exec(tmp[2])) !== null) {
+      return update([text, text.slice(0, -tmp2[2].length), tmp2[2]], {"object": {}, "input": text, "index": 0});
+    }
+    if ((tmp = eat.JSONPair(tmp[2])) === null) { return null; }
+    object[tmp.object.key] = tmp.object.value;
+    tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    while ((tmp2 = (/^(,)(.*)/).exec(tmp[2])) !== null) {
+      tmp2 = reEatWhiteSpacesIfThere.exec(tmp2[2]);
+      if ((tmp = eat.JSONPair(tmp2[2])) === null) { return null; }
+      if (objectHasOwnProperty(object, tmp.object.key)) {
+        return null; // same key found
+      }
+      object[tmp.object.key] = tmp.object.value;
+      tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    }
+    if ((tmp = (/^(\})(.*)/).exec(tmp[2])) === null) { return null; }
+    return update([text, text.slice(0, text.length - tmp[2].length), tmp[2]], {"object": object, "input": text, "index": 0});
+  };
+
+  eat.JSONPair = function (text) {
+    var tmp, object = {};
+    if ((tmp = eat.JSONString(text)) === null) { return null; }
+    object.key = tmp.object;
+    tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    if ((tmp = (/^(:)(.*)/).exec(tmp[2])) === null) { return null; }
+    tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    if ((tmp = eat.JSONValue(tmp[2])) === null) { return null; }
+    object.value = tmp.object;
+    return update([text, text.slice(0, text.length - tmp[2].length), tmp[2]], {"object": object, "input": text, "index": 0});
+  };
+
+  eat.JSONArray = function (text) {
+    var tmp, tmp2, object = [];
+    if ((tmp = (/^(\[)(.*)/).exec(text)) === null) { return null; }
+    tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    if ((tmp2 = (/^(\])(.*)/).exec(tmp[2])) !== null) {
+      return update([text, text.slice(0, -tmp2[2].length), tmp2[2]], {"object": [], "input": text, "index": 0});
+    }
+    if ((tmp = eat.JSONValue(tmp[2])) === null) { return null; }
+    object.push(tmp.object);
+    tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    while ((tmp2 = (/^(,)(.*)/).exec(tmp[2])) !== null) {
+      tmp2 = reEatWhiteSpacesIfThere.exec(tmp2[2]);
+      if ((tmp = eat.JSONValue(tmp2[2])) === null) { return null; }
+      object.push(tmp.object);
+      tmp = reEatWhiteSpacesIfThere.exec(tmp[2]);
+    }
+    if ((tmp = (/^(\])(.*)/).exec(tmp[2])) === null) { return null; }
+    return update([text, text.slice(0, text.length - tmp[2].length), tmp[2]], {"object": object, "input": text, "index": 0});
+  };
+
+  eat.JSONValue = function (text) {
+    var tmp;
+    if ((tmp = (eat.JSONString(text) || eat.JSONNumber(text) || eat.JSONObject(text) || eat.JSONArray(text))) !== null) {
+      return tmp;
+    }
+    if ((tmp = (/^(true)(.*)/).exec(text)) !== null) {
+      tmp.object = true;
+    } else if ((tmp = (/^(false)(.*)/).exec(text)) !== null) {
+      tmp.object = false;
+    } else if ((tmp = (/^(null)(.*)/).exec(text)) !== null) {
+      tmp.object = null;
+    }
+    return tmp;
+  };
+
+  var reJSONString = new RegExp("^(" + reStrJSONString + ")(.*)");
+  eat.JSONString = function (text) {
+    var tmp = reJSONString.exec(text);
+    if (tmp === null) { return null; }
+    tmp.object = JSON.parse(tmp[1]); // don't want to reimplement instanciation
+    return tmp;
+  };
+
+  var reJSONNumber = new RegExp("^(" + reStrJSONNumber + ")(.*)");
+  eat.JSONNumber = function (text) {
+    var tmp = reJSONNumber.exec(text);
+    if (tmp === null) { return null; }
+    tmp.object = JSON.parse(tmp[1]); // don't want to reimplement instanciation
+    return tmp;
+  };
+
+  var reStrRawChar = "[^\\x00-\\x1F\\x7F\",:\\[\\]\\{\\}\\(\\)]";
+  // var reStrRawChar = "[a-zA-Z0-9]";
+  var reEatRawString = new RegExp("^(" + reStrRawChar + "+)(.*)");
+
+  var reEatColumn = /^(:)(.*)/;
+  var reEatComma = /^(,)(.*)/;
+  //var reEatTextUntilSpecialChar = /^([^\[:,]+)(.*)/;
+
+  /*jslint regexp: false, ass: false */
+
+  // Converts the description string to a description object
+  // /!\ this is not a JSON string !
+  // description examples:
+  // - 'ajax'
+  // - 'ajax,base64["$ajax"]'
+  // - 'myajax:ajax,base64["$myajax"]'
+  function stringToJSON(description) {
+    /*jslint ass: true */
+    var tmp, iter = description, name, id, descriptionObject = {}, args;
+    while (true) {
+      if ((tmp = eat.JSONString(iter)) !== null || (tmp = reEatRawString.exec(iter)) !== null) {
+        iter = tmp[2];
+        name = tmp.object !== undefined ? tmp.object : tmp[1];
+        if ((tmp = reEatColumn.exec(iter)) !== null) {
+          iter = tmp[2];
+          if ((tmp = eat.JSONString(iter)) === null && (tmp = reEatRawString.exec(iter)) === null) {
+            throw new SyntaxError("MixinManager.stringToJSON: id given to `" + name + "` should contain at least one character");
+          }
+          iter = tmp[2];
+          id = tmp.object !== undefined ? tmp.object : tmp[1];
+        } else {
+          id = name;
+        }
+        if ((tmp = eat.JSONArray(iter)) !== null) {
+          iter = tmp[2];
+          args = tmp.object;
+          // throw new SyntaxError("MixinManager.stringToJSON: arguments of `" + name + "` are not JSON parsable");
+        }
+        if (descriptionObject[name]) {
+          throw new TypeError("MixinManager.stringToJSON: `" + name + "` is set more than once");
+        }
+        descriptionObject[name] = {"object": id};
+        if (args) { descriptionObject[name].args = args; }
+        if (iter !== "") {
+          if ((tmp = reEatComma.exec(iter)) === null) {
+            throw new SyntaxError("MixinManager.stringToJSON: expected `,` or end after arguments or id given to `" + name + "`");
+          }
+          name = undefined;
+          id = undefined;
+          args = undefined;
+          iter = tmp[2];
+        } else {
+          break;
+        }
+      } else {
+        throw new SyntaxError("MixinManager.stringToJSON: identifier expected");
+      }
+    }
+    return descriptionObject;
+  }
+
   // O(n)
   //      Nodes       Roots NonRoots   parse(id)
   // t1 - A-B         A     B          Parsing A (B is one of its children) (no need to parse all nodes to see it). If a child is absent, then error.
@@ -93,7 +258,7 @@
   //                        D
   //                        A
   // If Roots.length > 1 or < 1, then error. return root.instance
-  MixinManager.prototype.parse = function (description) {
+  function parseObject(description) {
     var mixins = this._mixins, nodes = {}, roots = {}, nonRoots = {}, i, il;
     function parse(id, stack) {
       var args, j, jl, childId;
@@ -149,6 +314,21 @@
       throw new TypeError("MixinManager.parse: description graph should contain one root");
     }
     return nodes[i].instance;
+  }
+
+  // detects if description is a string or an object, and tries to make a mixin from it
+  MixinManager.prototype.parse = function (description) {
+    if (typeof description === "string") {
+      try {
+        description = JSON.parse(description);
+      } catch (e) {
+        return parseObject.call(this, stringToJSON.call(this, description));
+      }
+    }
+    if (typeof description !== "object" || description === null) {
+      throw new TypeError("MixinManager.parse: description should be a valid non empty string or an object");
+    }
+    return parseObject.call(this, description);
   };
 
   var mixinManager = new MixinManager();
